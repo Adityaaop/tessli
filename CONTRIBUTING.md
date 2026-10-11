@@ -17,7 +17,7 @@ Please read the [Code of Conduct](CODE_OF_CONDUCT.md) first. By contributing you
 
 ## Your first pull request
 
-You need Git, Node.js 22.18 or later and npm.
+You need Git, Node.js 22.18 or later, npm and Python 3.9 or later (`python3`, for the Taste Bench tests in `npm run check`).
 
 1. Fork the repository on GitHub, then clone your fork and install:
 
@@ -35,7 +35,7 @@ You need Git, Node.js 22.18 or later and npm.
    npm run check
    ```
 
-   It runs the hero artwork hash check, `format:check`, `typecheck`, `lint`, `test`, `catalogue:check`, `registry:check` and `build`. `npm run format` fixes formatting. CI runs the same, plus the shadcn registry validation and the browser and [item preview](#check-one-item) tests.
+   It runs the hero artwork hash check, `format:check`, `typecheck`, `lint`, `test`, `bench:test` (the Taste Bench harness tests; needs `python3`), `catalogue:check`, `registry:check` and `build`. `npm run format` fixes formatting. CI runs the same, plus the shadcn registry validation and the browser and [item preview](#check-one-item) tests.
 
 5. Commit with a sign-off (`git commit -s`, see [Sign-off (DCO)](#sign-off-dco)), push to your fork and open a pull request against `main`. Fill in the pull request template, including the [AI-assistance](#ai-assistance) line.
 
