@@ -770,7 +770,7 @@
             "Filling the space under the actions with invented logos or \"Trusted by\" counts.",
             "Centring a long headline and description, which makes the text ragged and hard to scan."
           ],
-          "states": ["default"],
+          "states": ["default", "primary-only"],
           "responsive": {
             "desktop": "Headline, description and actions on one left edge, capped at a readable width, with the product frame full width below; from 56rem of frame width it shows the notebooks column, the notes list and the open note.",
             "mobile": "The text block comes first and the actions stack full width with the primary on top; the frame below drops to the notes list alone, at full text size, and adds the open note from 36rem."
@@ -785,7 +785,7 @@
           "status": "community",
           "reviewed_by": [],
           "reviewed_at": null,
-          "contributors": [],
+          "contributors": ["Adityaaop"],
           "provenance": "original",
           "license": "MIT"
         }

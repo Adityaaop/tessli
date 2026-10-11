@@ -19,6 +19,7 @@ import { states as MobileListDetailStates } from "./items/mobile-list-detail/sta
 import PricingTiersDemo from "./items/pricing-tiers/demo";
 import { states as PricingTiersStates } from "./items/pricing-tiers/states";
 import ProductHeroDemo from "./items/product-hero/demo";
+import { states as ProductHeroStates } from "./items/product-hero/states";
 import SettingsAccountDemo from "./items/settings-account/demo";
 import { states as SettingsAccountStates } from "./items/settings-account/states";
 import SocialProofHonestDemo from "./items/social-proof-honest/demo";
@@ -79,6 +80,7 @@ export const previews: Record<
   },
   "product-hero": {
     default: ProductHeroDemo,
+    "primary-only": ProductHeroStates["primary-only"],
   },
   "settings-account": {
     default: SettingsAccountDemo,

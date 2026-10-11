@@ -1,6 +1,12 @@
 // Fictional product: Northwind Notes. The people, notebooks and notes are
 // invented for the demo; nothing here describes a real product or customer.
-import { ProductHero, ProductWindow } from "./product-hero";
+import type * as React from "react";
+
+import {
+  ProductHero,
+  ProductWindow,
+  type ProductHeroAction,
+} from "./product-hero";
 
 type Notebook = { name: string; count: number; current?: boolean };
 type Note = {
@@ -169,7 +175,13 @@ function NotebookView() {
   );
 }
 
-export default function ProductHeroDemo() {
+export function ProductHeroExample({
+  secondaryAction,
+  note,
+}: {
+  secondaryAction?: ProductHeroAction;
+  note?: React.ReactNode;
+} = {}) {
   return (
     <ProductHero
       // The preview page already has its own h1. On a landing page, leave
@@ -178,8 +190,8 @@ export default function ProductHeroDemo() {
       title="Team notes that stay findable after the meeting"
       description="Northwind Notes keeps every notebook searchable by title, text and author, shows which notes link to each other, and exports everything as Markdown whenever you want to leave."
       primaryAction={{ label: "Start a free notebook", href: "#start" }}
-      secondaryAction={{ label: "See how search works", href: "#search" }}
-      note="Free for one person. No card needed."
+      secondaryAction={secondaryAction}
+      note={note}
       product={
         <ProductWindow
           label="Northwind Notes · Field research"
@@ -188,6 +200,15 @@ export default function ProductHeroDemo() {
           <NotebookView />
         </ProductWindow>
       }
+    />
+  );
+}
+
+export default function ProductHeroDemo() {
+  return (
+    <ProductHeroExample
+      secondaryAction={{ label: "See how search works", href: "#search" }}
+      note="Free for one person. No card needed."
     />
   );
 }

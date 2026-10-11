@@ -834,7 +834,8 @@
             "Centring a long headline and description, which makes the text ragged and hard to scan."
           ],
           "states": [
-            "default"
+            "default",
+            "primary-only"
           ],
           "responsive": {
             "desktop": "Headline, description and actions on one left edge, capped at a readable width, with the product frame full width below; from 56rem of frame width it shows the notebooks column, the notes list and the open note.",
@@ -850,7 +851,9 @@
           "status": "community",
           "reviewed_by": [],
           "reviewed_at": null,
-          "contributors": [],
+          "contributors": [
+            "Adityaaop"
+          ],
           "provenance": "original",
           "license": "MIT"
         }
