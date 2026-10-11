@@ -37,17 +37,25 @@ test("canonical Browse derives one paginated result set from source profiles", a
   assert.match(filters, /allLabel="All source types"/);
   assert.doesNotMatch(filters, /All coverage levels|profileLevel/);
   assert.match(filters, /<option value="">\{allLabel\}<\/option>/);
-  assert.doesNotMatch(page, /FullReferenceExperience|fetch\(/);
+  assert.doesNotMatch(page, /fetch\(/);
 });
 
-test("reference support does not promote unready submission actions", async () => {
-  const reference = await read(
-    "components/full-reference/full-reference-experience.tsx",
-  );
+test("canonical Browse uses repository data without remote state", async () => {
+  const [resources, filters, navigation] = await Promise.all([
+    read("app/resources/page.tsx"),
+    read("components/browse/browse-filters.tsx"),
+    read("components/site-header/navigation.ts"),
+  ]);
 
-  assert.doesNotMatch(reference, /href="\/(submit|suggest)"/u);
-  assert.match(reference, /href="\/curation#corrections"/u);
-  assert.match(reference, /Read correction guidance/u);
+  assert.match(resources, /import catalogue from "@\/data\/catalogue\.json"/);
+  assert.match(resources, /getAllSourceProfiles\(\)/);
+  assert.match(resources, /parseBrowseState/);
+  assert.match(resources, /deriveBrowseResults/);
+  assert.match(resources, /<BrowseResults resources=\{resources\}/);
+  assert.doesNotMatch(resources, /RoutePlaceholder|localStorage|fetch\(/);
+  assert.match(navigation, /label: "Browse"[\s\S]*?available: true/);
+  assert.match(filters, /id="browse-search"/);
+  assert.match(filters, /name="q"/);
 });
 
 test("Browse state is task-focused, serializable, and rejects fake verification sorting", async () => {
@@ -107,7 +115,7 @@ test("canonical Browse renders one responsive result tree without duplicate desk
   assert.match(css, /grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(css, /@media \(max-width: 1100px\)/);
   assert.match(css, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(css, /@media \(max-width: 700px\)/);
+  assert.match(css, /@media \(max-width: 767px\)/);
   assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(css, /\.filterFieldsOpen\s*\{/);
   assert.doesNotMatch(css, /\.table|\.compactList|\.viewLinks/);
