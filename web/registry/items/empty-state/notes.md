@@ -11,7 +11,15 @@ avoid_when:
   - The whole screen is empty because the user has no access; show a permission message with who to ask instead.
   - Content is still loading; show a skeleton or progress state, not an empty state.
   - The empty region is minor (a sidebar list, a small widget); a single muted sentence is enough.
-rules: []
+rules:
+  - H-02 # headings follow the outline
+  - S-02 # one shared edge
+  - C-02 # never colour alone
+  - W-02 # action labels name the outcome
+  - ST-01 # every data region has its states (empty and error here; loading is out of scope)
+  - ST-02 # empty states differ by cause
+  - ST-04 # errors explain and offer a way out
+  - A-01 # 44px touch targets
 ai_default: >-
   A large centred illustration or icon, the headline "Nothing here yet", a
   vague line such as "Get started by creating your first item", and the same
@@ -47,6 +55,6 @@ license: MIT
 
 An empty state is the first screen many people see, and the screen they see when something goes wrong. The common default treats all of those moments the same: an illustration and "Nothing here yet". This item treats them as three different situations.
 
-**First use** explains what will appear and offers the action that fills it. **No results** repeats the query and the search scope, then offers a wider search or a reset. **Error** says what failed and what is safe, then offers a retry.
+**First use** explains what will appear and offers the action that fills it. **No results** repeats the query and the search scope, then offers a wider search or a reset. **Error** says what failed and what is safe, then offers a retry. Loading is out of scope: pair this item with a skeleton or progress state to cover all of ST-01.
 
 The component is deliberately plain: a heading, a sentence or two, and actions. Put it where the content would have been, at the same alignment, so the page does not jump when content arrives.
