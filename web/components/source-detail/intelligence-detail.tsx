@@ -60,7 +60,6 @@ export function IntelligenceDetail({
   profile: SourceProfile;
   similar: readonly SimilarSourceMatch[];
 }>) {
-  const intelligence = profile.intelligence;
   const exploration = [
     ...new Set([...profile.capabilities, ...profile.contentObjects]),
   ];
@@ -73,32 +72,39 @@ export function IntelligenceDetail({
       <GuideSection title="What to explore">
         <GuideList
           items={exploration}
-          empty="No structured exploration points are recorded for this Listed source. Start with the canonical provider page."
+          empty="No structured exploration points are recorded for this source. Start with the canonical provider page."
         />
       </GuideSection>
 
       <GuideSection title="How to access it">
-        <ul className={styles.accessRoutes}>
-          {profile.accessRoutes.map((route) => (
-            <li key={`${route.kind}-${route.url ?? route.agentAction}`}>
-              <div>
-                <strong>{label(route.kind)}</strong>
-                {route.preferred ? (
-                  <Tag tone="signal">Preferred route</Tag>
+        {profile.status === "archived" ? (
+          <p className={styles.emptyNote}>
+            This source is archived, so Tessli no longer recommends an access
+            route. Its original address is listed above.
+          </p>
+        ) : (
+          <ul className={styles.accessRoutes}>
+            {profile.accessRoutes.map((route) => (
+              <li key={`${route.kind}-${route.url ?? route.agentAction}`}>
+                <div>
+                  <strong>{label(route.kind)}</strong>
+                  {route.preferred ? (
+                    <Tag tone="signal">Preferred route</Tag>
+                  ) : null}
+                </div>
+                <p>{route.agentAction}</p>
+                <p className={styles.routeMeta}>
+                  {accessRequirement(route.auth)}
+                </p>
+                {route.url ? (
+                  <a href={route.url} rel="noopener noreferrer" target="_blank">
+                    Open recorded {label(route.kind)} ↗
+                  </a>
                 ) : null}
-              </div>
-              <p>{route.agentAction}</p>
-              <p className={styles.routeMeta}>
-                {accessRequirement(route.auth)}
-              </p>
-              {route.url ? (
-                <a href={route.url} rel="noopener noreferrer" target="_blank">
-                  Open recorded {label(route.kind)} ↗
-                </a>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        )}
       </GuideSection>
 
       {compatibility.length > 0 ? (
@@ -150,45 +156,14 @@ export function IntelligenceDetail({
               <dd>{label(profile.accessModel.access)}</dd>
             </div>
             <div>
-              <dt>Availability</dt>
+              <dt>Status</dt>
               <dd>{label(profile.status)}</dd>
             </div>
           </dl>
 
-          {intelligence ? (
-            <section aria-labelledby="governance-title">
-              <h3 id="governance-title">Recorded governance</h3>
-              <ul>
-                <li>
-                  Persistence:{" "}
-                  {label(intelligence.governance.defaultPersistence)}
-                </li>
-                <li>
-                  Redistribution:{" "}
-                  {label(intelligence.governance.assetRedistribution)}
-                </li>
-                <li>
-                  Attribution:{" "}
-                  {label(intelligence.governance.sourceAttribution)}
-                </li>
-                <li>
-                  User credential required:{" "}
-                  {intelligence.governance.userCredentialRequired
-                    ? "Yes"
-                    : "No"}
-                </li>
-                <li>
-                  Terms review required:{" "}
-                  {intelligence.governance.termsReviewRequired ? "Yes" : "No"}
-                </li>
-              </ul>
-            </section>
-          ) : (
-            <p className={styles.emptyNote}>
-              No structured governance record is linked to this Listed source.
-              This page does not imply live provider verification.
-            </p>
-          )}
+          <p className={styles.emptyNote}>
+            This page does not imply live provider verification.
+          </p>
         </div>
       </details>
     </>

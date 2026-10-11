@@ -19,7 +19,7 @@ import {
   type BrowseState,
 } from "@/lib/browse";
 import {
-  getAllSourceProfiles,
+  getBrowsableSourceProfiles,
   SOURCE_TYPES,
   type SourceProfile,
 } from "@/lib/source-profiles";
@@ -73,12 +73,9 @@ function cardForProfile(profile: SourceProfile): ResourceCardData {
     description: resource.description,
     category: resource.category,
     access: resource.access as ResourceCardAccess,
-    usefulFor: resource.usefulFor,
-    tags: resource.tags,
     status: resource.status as ResourceCardData["status"],
     faviconUrl: resource.faviconUrl,
     previewImageUrl: resource.previewImageUrl,
-    previewSource: resource.previewSource as ResourceCardData["previewSource"],
   };
 }
 
@@ -119,7 +116,7 @@ export default async function ResourcesPage({
 }: ResourcesPageProps) {
   const rawSearchParams = await searchParams;
   const state = parseBrowseState(rawSearchParams, categoryIds, sourceTypeIds);
-  const result = deriveBrowseResults(getAllSourceProfiles(), state);
+  const result = deriveBrowseResults(getBrowsableSourceProfiles(), state);
 
   if (result.outOfRange) {
     redirect(withState(state, { page: result.page }));

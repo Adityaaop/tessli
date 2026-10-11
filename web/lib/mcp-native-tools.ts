@@ -1,6 +1,10 @@
 import catalogue from "../data/catalogue.json" with { type: "json" };
 import { getSimilarSourceProfiles } from "./similar-sources.ts";
-import { getSourceProfile, type SourceProfile } from "./source-profiles.ts";
+import {
+  getSourceProfile,
+  isArchivedSource,
+  type SourceProfile,
+} from "./source-profiles.ts";
 import {
   retrieveTaskSources,
   type TaskRetrievalInput,
@@ -79,8 +83,13 @@ function toSourceGuide(profile: SourceProfile) {
     url: profile.url,
     summary: profile.summary,
     sourceType: profile.sourceType,
-    profileLevel: profile.profileLevel,
     status: profile.status,
+    ...(profile.status === "archived"
+      ? {
+          archivedReason: profile.archivedReason,
+          replacedBy: profile.replacedBy,
+        }
+      : {}),
     accessModel: { ...profile.accessModel },
     whatItHelpsWith: profile.bestFor.slice(0, 4),
     whatToInspect: [...profile.capabilities, ...profile.contentObjects].slice(
@@ -89,7 +98,6 @@ function toSourceGuide(profile: SourceProfile) {
     ),
     accessRoutes: toAccessRoutes(profile),
     caveats: profile.limitations.slice(0, 3),
-    coverageNote: profile.coverage.reason,
   };
 }
 
@@ -152,8 +160,34 @@ export function findNativeAlternatives(
 }
 
 export function getNativeCollection(identifier: string) {
-  const collection = resolveCollection(identifier);
-  const resourceIds = collection.resourceIds.slice(
+  return createNativeCollection(resolveCollection(identifier));
+}
+
+/**
+ * Builds a collection's MCP output. Archived sources never appear in it and
+ * never count towards resourceCount. `resolve` defaults to the canonical
+ * profile index; fixtures pass their own.
+ */
+export function createNativeCollection(
+  collection: CatalogueCollection,
+  resolve: (identifier: string) => SourceProfile | null = getSourceProfile,
+) {
+  const requireProfile = (resourceId: string) => {
+    const profile = resolve(resourceId);
+    if (!profile) {
+      throw new NativeMcpInputError(
+        `Unknown Tessli resource identifier: ${resourceId}.`,
+      );
+    }
+    return profile;
+  };
+  const isBrowsableResource = (resourceId: string) => {
+    const profile = resolve(resourceId);
+    return profile !== null && !isArchivedSource(profile);
+  };
+  const browsableResourceIds =
+    collection.resourceIds.filter(isBrowsableResource);
+  const resourceIds = browsableResourceIds.slice(
     0,
     NATIVE_MCP_LIMITS.collectionSources,
   );
@@ -167,28 +201,34 @@ export function getNativeCollection(identifier: string) {
     audience: collection.audience,
     status: collection.status,
     lastReviewedAt: collection.lastReviewedAt,
-    resourceCount: collection.resourceIds.length,
+    resourceCount: browsableResourceIds.length,
     returnedSourceCount: resourceIds.length,
     sources: resourceIds.map((resourceId, index) => ({
       order: index + 1,
-      ...toSourceGuide(resolveSourceProfile(resourceId)),
+      ...toSourceGuide(requireProfile(resourceId)),
     })),
-    stages: collection.stages.map((stage) => ({
-      id: stage.id,
-      title: stage.title,
-      inspect: stage.inspect,
-      decision: stage.decision,
-      sources: stage.items
-        .filter((item) => resourceIds.includes(item.resourceId))
-        .map((item) => {
-          const source = resolveSourceProfile(item.resourceId);
-          return {
-            sourceId: source.id,
-            sourceSlug: source.slug,
-            role: item.role,
-          };
-        }),
-    })),
+    // Stages whose members are all archived are hidden, as on the website.
+    // Stages emptied only by the source limit stay listed.
+    stages: collection.stages
+      .filter((stage) =>
+        stage.items.some((item) => isBrowsableResource(item.resourceId)),
+      )
+      .map((stage) => ({
+        id: stage.id,
+        title: stage.title,
+        inspect: stage.inspect,
+        decision: stage.decision,
+        sources: stage.items
+          .filter((item) => resourceIds.includes(item.resourceId))
+          .map((item) => {
+            const source = requireProfile(item.resourceId);
+            return {
+              sourceId: source.id,
+              sourceSlug: source.slug,
+              role: item.role,
+            };
+          }),
+      })),
     boundary:
       "Collection roles and source guidance are repository-recorded; provider access remains outside Tessli.",
   };
@@ -208,26 +248,5 @@ export function createNativeResearchBrief(input: TaskRetrievalInput) {
     ],
     boundary:
       "The brief is deterministic, repository-backed guidance. It does not read browser data, inspect project code, fetch providers, use credentials, or write state.",
-  };
-}
-
-/**
- * Direct library compatibility for the V3.2 profile-parity checks. This is not
- * registered as a local MCP tool and has no provider or filesystem effects.
- */
-export function getNativeResourceProfile(identifier: string) {
-  const profile = resolveSourceProfile(identifier);
-
-  return {
-    resource: {
-      id: profile.id,
-      slug: profile.slug,
-      name: profile.name,
-      url: profile.url,
-      accessRoutes: toAccessRoutes(profile),
-    },
-    intelligenceProfile: profile.intelligence,
-    interpretationBoundary:
-      "Capabilities and workflow fit are Tessli classifications. Revalidate time-sensitive provider claims before relying on them.",
   };
 }
