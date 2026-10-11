@@ -1,0 +1,101 @@
+name: Source links
+
+# Weekly report of unreachable source URLs. It only opens or updates one
+# issue; it never edits, removes or archives a source.
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: source-links
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: List URLs of non-archived sources
+        run: |
+          mkdir -p lychee
+          node --input-type=module -e '
+            import { readFileSync, writeFileSync } from "node:fs";
+            const { resources } = JSON.parse(readFileSync("web/data/catalogue.json", "utf8"));
+            const urls = resources
+              .filter((source) => source.status !== "archived")
+              .map((source) => source.url);
+            writeFileSync("lychee/source-urls.txt", urls.join("\n") + "\n");
+            console.log(`${urls.length} source URLs to check.`);
+          '
+
+      - name: Restore link-check cache
+        uses: actions/cache@v4
+        with:
+          # Weekly runs always find last week's cache older than 3 days, so
+          # every scheduled run rechecks every URL; the cache only speeds up
+          # a manual rerun soon after.
+          path: .lycheecache
+          key: lychee-${{ github.run_id }}
+          restore-keys: lychee-
+
+      - name: Check links
+        id: lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --cache
+            --max-cache-age 3d
+            --accept 200..=299,403,429
+            --timeout 20
+            --max-retries 2
+            --max-concurrency 8
+            --no-progress
+            lychee/source-urls.txt
+          output: lychee/report.md
+          fail: false
+
+      # lychee exits 2 when links are broken and 1 on a runtime or config
+      # error. Only exit 2 reports links; any other non-zero code fails the
+      # run so a tool failure is not posted as broken sources.
+      - name: Fail on a lychee error
+        if: steps.lychee.outputs.exit_code != 0 && steps.lychee.outputs.exit_code != 2
+        env:
+          EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
+        run: |
+          echo "::error::lychee failed with exit code ${EXIT_CODE}; see the Check links step."
+          exit 1
+
+      - name: Find the open "Broken source links" issue
+        id: issue
+        if: steps.lychee.outputs.exit_code == 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          number="$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --search 'in:title "Broken source links"' \
+            --json number,title \
+            --jq 'map(select(.title == "Broken source links")) | first | .number // empty')"
+          echo "number=${number}" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the issue
+        if: steps.lychee.outputs.exit_code == 2
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: Broken source links
+          content-filepath: lychee/report.md
+          issue-number: ${{ steps.issue.outputs.number }}
